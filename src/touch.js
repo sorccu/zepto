@@ -39,11 +39,11 @@
     touch = {}
   }
 
-  function handleStart(localTouch, target) {
+  function handleStart(localTouch) {
     var now, delta
     now = Date.now()
     delta = now - (touch.last || now)
-    touch.el = $(parentIfText(target))
+    touch.el = $(parentIfText(localTouch.target))
     touchTimeout && clearTimeout(touchTimeout)
     touch.x1 = localTouch.pageX
     touch.y1 = localTouch.pageY
@@ -106,15 +106,19 @@
 
     $(document.body).bind(simulate ? {
         mousedown: function(e) {
-          handleStart(e, e.target)
+          handleStart(e)
+          // unlike touchmove, mousemove can also trigger when the mouse has
+          // not been pressed down, so we'll add it here to prevent the extra
+          // work
+          $(this).on('mousemove', handleMove)
         },
-        mousemove: function(e) {
-          handleMove(e)
-        },
-        mouseup: handleEnd
+        mouseup: function(e) {
+          $(this).off('mousemove', handleMove)
+          handleEnd(e)
+        }
       } : {
         touchstart: function(e){
-          handleStart(e.touches[0], e.target)
+          handleStart(e.touches[0])
         },
         touchmove: function(e){
           handleMove(e.touches[0])
